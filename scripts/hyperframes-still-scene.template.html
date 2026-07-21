@@ -1,0 +1,59 @@
+<!doctype html>
+<!--
+  Template: 1 scene = 1 still, Ken Burns pan/zoom + optional typewriter caption.
+  9:16, ~5-6s per scene. Duplicate this <section> per still and adjust data-start
+  per HyperFrames timing conventions (see the `hyperframes` skill and
+  `HyperFrames Production SKILL.md` in this repo's doc/ for full authoring rules).
+  Replace STILL_SRC and CAPTION_TEXT per scene before rendering.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=1080, height=1920" />
+  <title>ad-scene</title>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: #050508; }
+    .scene { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    .still {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      background-image: url('STILL_SRC');
+      background-size: cover; background-position: center;
+      transform-origin: center center;
+    }
+    .caption {
+      position: absolute; left: 60px; right: 60px; bottom: 220px;
+      font-family: -apple-system, sans-serif; font-weight: 700; font-size: 56px;
+      color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,.6);
+      white-space: nowrap; overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <section class="scene" data-start="0" data-duration="5.5">
+    <div class="still" id="still"></div>
+    <div class="caption" id="caption">CAPTION_TEXT</div>
+  </section>
+  <script>
+    // Ken Burns: slow zoom + slight pan, no rotation (keeps product proportions legible).
+    gsap.fromTo('#still',
+      { scale: 1.0, x: 0, y: 0 },
+      { scale: 1.08, x: -20, y: -10, duration: 5.5, ease: 'none' }
+    );
+    // Typewriter caption — only for copy-overlay scenes; remove this block for plain scenes.
+    const el = document.getElementById('caption');
+    const full = el.textContent;
+    el.textContent = '';
+    let i = 0;
+    gsap.to({}, {
+      duration: 1.2, ease: 'none',
+      onUpdate: function () {
+        const n = Math.floor(this.progress() * full.length);
+        if (n !== i) { i = n; el.textContent = full.slice(0, i); }
+      },
+      delay: 0.6,
+    });
+  </script>
+</body>
+</html>

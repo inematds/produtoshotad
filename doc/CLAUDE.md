@@ -6,14 +6,31 @@ An automation pipeline that turns a single product photo into a full set of ecom
 
 Stack: an AI agent orchestrating Fal.ai / MiniMax using the Seedance model for generation, Hyperframes for automated video editing, ElevenLabs SDK for voiceover, and CapCut/Premiere Pro for the manual editing lane.
 
-## Required skills — always load all four
+## Escolha de worker
 
-- **`product-consistency.md`** — governs every single generation call (stills, copy overlays, image-to-video scenes). Covers reference-locking, prompt-writing rules, and the mandatory QA checkpoint. This is the skill that prevents product drift, the single most common failure mode in AI ad creative.
-- **`ad-pipeline.md`** — governs sequencing and branching: batch structure, the two avenues, when to route to manual vs. automated finishing, and when to invoke Hyperframes.
-- **`fal-setup.md`** — governs the mechanical side of talking to Fal.ai: auth, CDN uploads, and the exact call pattern for Seedance image-to-video (parameters, batching via submit/poll, cost notes).
-- **`elevenlabs-setup.md`** — governs voiceover generation: checking for an existing SDK/key before installing anything, auth, the text-to-speech call pattern, and cost-header tracking.
+Este projeto tem 3 lanes (workers) para a mesma entrega (5 stills + 5 vídeos). Escolha
+UM antes de começar, com base no pedido do usuário:
 
-Load `product-consistency.md` before any generation step, regardless of which avenue is active. Load `ad-pipeline.md` before starting or resuming the pipeline itself. Load `fal-setup.md` before writing or running any code that calls the Fal.ai API. Load `elevenlabs-setup.md` before writing or running any voiceover-generation code — and per that skill, check for an already-installed SDK/key before running any install step. None of the four duplicate each other's rules — consistency governs *quality*, pipeline governs *sequence*, fal-setup and elevenlabs-setup govern *mechanics* for their respective APIs.
+| Sinal do pedido | Worker | Skill de entrada |
+|---|---|---|
+| "só imagens", "sem custo", "grátis", "US$ 0" | **1 — Agnes** | `ad-pipeline-agnes.md` |
+| "sem IA de vídeo", "determinístico", "anima as stills", vídeo sem gerar cenas novas | **2 — HyperFrames** | `ad-pipeline-hyperframes.md` |
+| Pedido completo (stills + i2v) sem restrição de custo, ou pedido explícito de Seedance/Fal | **3 — original** | `ad-pipeline.md` (este arquivo) |
+
+Os workers 1 e 2 podem ser encadeados (1 gera as stills, 2 anima-as em vídeo) para cobrir
+a entrega completa a custo zero. O worker 3 é standalone (gera stills E vídeo via Fal).
+Se o pedido não deixar claro qual lane, pergunte antes de gerar qualquer imagem.
+
+## Required skills
+
+- **`product-consistency.md`** — governs every single generation call (stills, copy overlays, image-to-video scenes). Covers reference-locking, prompt-writing rules, and the mandatory QA checkpoint. This is the skill that prevents product drift, the single most common failure mode in AI ad creative. Load regardless of worker.
+- **`ad-pipeline.md`** — worker 3, the original full-fidelity lane: sequencing/branching, batch structure, the two avenues, when to route to manual vs. automated finishing, and when to invoke Hyperframes.
+- **`ad-pipeline-agnes.md`** — worker 1, images-only, US$ 0 (Agnes AI).
+- **`ad-pipeline-hyperframes.md`** — worker 2, video without an image-to-video model (animates approved stills with HyperFrames/GSAP).
+- **`fal-setup.md`** — mechanics of Fal.ai: auth, CDN uploads, Seedance image-to-video call pattern (submit/poll, cost notes). Only needed for worker 3.
+- **`elevenlabs-setup.md`** — mechanics of ElevenLabs voiceover: checking for an existing SDK/key before installing anything, auth, the text-to-speech call pattern, cost-header tracking. Needed for worker 3, optional for worker 2.
+
+Load `product-consistency.md` before any generation step, regardless of which worker is active. Load the chosen worker's skill (`ad-pipeline.md` / `ad-pipeline-agnes.md` / `ad-pipeline-hyperframes.md`) before starting or resuming the pipeline. Load `fal-setup.md` before writing or running any code that calls the Fal.ai API. Load `elevenlabs-setup.md` before writing or running any voiceover-generation code — and per that skill, check for an already-installed SDK/key before running any install step. None of these duplicate each other's rules — consistency governs *quality*, the worker file governs *sequence*, fal-setup and elevenlabs-setup govern *mechanics* for their respective APIs.
 
 ## Non-negotiable rules for this project
 

@@ -91,6 +91,19 @@ Padrão de nomes do projeto: arquivos-skill em kebab-case com frontmatter `name`
 7. **Publicação:** commit + push no repo público `inematds/produtoshotad`
    (autor/committer `inematds <inematds@gmail.com>`). Trabalho termina no push.
 
+## 4bis. Status de implementação (2026-07-21)
+
+Tarefas 1–5 concluídas: estrutura de pastas, `.env.example`, `scripts/agnes_stills.py`,
+`scripts/kokoro_tts.py`, `doc/ad-pipeline-agnes.md`, `scripts/hyperframes-still-scene.template.html`,
+`doc/ad-pipeline-hyperframes.md`, `ad-pipeline.md` e `CLAUDE.md` atualizados com o roteamento
+de worker.
+
+**Teste de fumaça (tarefa 6):** `AGNES_API_KEY`, `FAL_KEY` e `ELEVENLABS_API_KEY` carregam
+corretamente dos `.env` (sem imprimir valores). Kokoro TTS gerou áudio local com sucesso
+(`output/voz/smoke-test.wav`). **Não executado** por falta de insumo real: geração de still
+via Agnes (precisa de uma foto real de produto em `products/`) e chamada Seedance (custo real,
+requer pedido explícito e produto real). Rodar esses dois quando houver uma foto de produto.
+
 ## 4. Regras transversais (valem para os 3)
 
 - Referência travada re-anexada em toda geração (adaptada a 2 refs no Agnes).

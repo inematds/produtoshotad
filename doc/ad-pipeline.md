@@ -7,6 +7,22 @@ description: Use this skill to orchestrate the end-to-end AI product shot and vi
 
 This skill defines the two delivery avenues for the pipeline and the exact stage sequence for both still image ads and short-form video ads. It assumes `product-consistency.md` is loaded and applied at every generation and QA step referenced below — this file does not repeat those rules, only where they get invoked.
 
+## Worker lanes — pick one before starting
+
+This file (`ad-pipeline`) is **worker 3**, the paid, full-fidelity lane (Fal.ai/Seedance +
+ElevenLabs + Hyperframes) described below. Two alternative lanes cover the same 5-stills +
+5-videos deliverable at lower cost or without a video-generation model:
+
+- **`ad-pipeline-agnes`** (worker 1) — stills only, via Agnes AI, US$ 0. Use when the user
+  wants images only or wants zero generation cost.
+- **`ad-pipeline-hyperframes`** (worker 2) — video without an image-to-video model; animates
+  already-approved stills with HyperFrames/GSAP motion design instead of Seedance/Kling/Agnes
+  video. Use when the user wants deterministic, code-driven video or wants to skip
+  video-generation cost/latency.
+
+See `CLAUDE.md`, section "Escolha de worker", for the full routing rule. Do not run this file
+(worker 3) by default when the user's request matches worker 1 or 2 instead.
+
 ## The two avenues
 
 Both avenues start from the identical generation pipeline. They differ only in the finishing stage:
