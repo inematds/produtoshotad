@@ -17,12 +17,17 @@ Arquivos existentes em `doc/`:
 | `CLAUDE.md` | Playbook mestre: regras, batch 3+2 stills / 3+2 vídeos |
 | `ad-pipeline.md` | Sequenciamento: hero → variações → cenas i2v → montagem → voz |
 | `product-consistency.md` | Anti-drift: referência travada em TODA chamada, QA obrigatório |
-| `fal-setup.md` (referenciado, **não existe ainda**) | Mecânica Fal.ai/Seedance |
+| `fal-setup.md` | Mecânica Fal.ai/Seedance (auth FAL_KEY, upload CDN, i2v submit/poll) |
 | `elevenlabs-setup.md` | Mecânica ElevenLabs TTS |
 | `HyperFrames Production SKILL.md` | Padrões de produção HyperFrames (GSAP, shaders, easing) |
 
-**Lacunas:** `fal-setup.md` não existe; não há código, `.env.example`, nem estrutura de
-pastas (`products/`, `output/`); o pipeline original depende de APIs pagas (Fal, ElevenLabs).
+**Lacunas:** não há código, `.env.example`, nem estrutura de pastas (`products/`, `output/`);
+o pipeline original depende de APIs pagas (Fal, ElevenLabs).
+
+**API keys (verificado em 2026-07-21):** `AGNES_API_KEY` e `ELEVENLABS_API_KEY` existem em
+`~/projetos/openpcbot/.env` — carregar em runtime de lá (nunca copiar/imprimir valores).
+`FAL_KEY` **não existe** em `~/projetos/openpcbot/.env` nem `~/projetos/wifi/.env`; o worker 3
+só roda a parte Seedance quando o usuário fornecer a key (não bloquear os workers 1 e 2 por isso).
 
 ## 2. Os 3 workflows (workers)
 
@@ -63,9 +68,8 @@ Padrão de nomes do projeto: arquivos-skill em kebab-case com frontmatter `name`
 - **Escopo:** o pipeline completo conforme `doc/CLAUDE.md` + `doc/ad-pipeline.md`:
   Fal.ai/**Seedance** para stills e image-to-video, **ElevenLabs** para voz,
   **HyperFrames** para a montagem da avenida automatizada, CapCut/Premiere na assistida.
-- **Pendência a resolver na implementação:** criar `doc/fal-setup.md` (auth `FAL_KEY`,
-  upload CDN, submit/poll do Seedance i2v, custos) — é referenciado pelo CLAUDE.md
-  mas não existe.
+- Mecânica em `doc/fal-setup.md` (já presente). **Pendência:** obter `FAL_KEY`
+  (não existe nos .env conhecidos) antes de rodar a lane Seedance.
 
 ## 3. Tarefas de implementação (ordem de execução)
 
@@ -78,8 +82,7 @@ Padrão de nomes do projeto: arquivos-skill em kebab-case com frontmatter `name`
 3. **Worker 2:** escrever `doc/ad-pipeline-hyperframes.md` + template de composição
    HyperFrames 9:16 (uma cena por still, 5–6s cada) e alternativa Remotion; script de
    render/concat (ffmpeg) até o MP4 final.
-4. **Worker 3:** escrever `doc/fal-setup.md` (fechando a lacuna) e revisar
-   `ad-pipeline.md` para apontar para os workers 1 e 2 como lanes alternativas
+4. **Worker 3:** revisar `ad-pipeline.md` para apontar para os workers 1 e 2 como lanes alternativas
    ("lane $0" e "lane sem-vídeo-IA").
 5. **CLAUDE.md:** adicionar seção "Escolha de worker" — como rotear o pedido do usuário
    para 1, 2 ou 3 (custo zero → 1; sem IA de vídeo / determinístico → 2; qualidade
