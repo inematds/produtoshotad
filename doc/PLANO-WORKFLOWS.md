@@ -26,8 +26,7 @@ o pipeline original depende de APIs pagas (Fal, ElevenLabs).
 
 **API keys (verificado em 2026-07-21):** `AGNES_API_KEY` e `ELEVENLABS_API_KEY` existem em
 `~/projetos/openpcbot/.env` — carregar em runtime de lá (nunca copiar/imprimir valores).
-`FAL_KEY` **não existe** em `~/projetos/openpcbot/.env` nem `~/projetos/wifi/.env`; o worker 3
-só roda a parte Seedance quando o usuário fornecer a key (não bloquear os workers 1 e 2 por isso).
+`FAL_KEY` existe em `~/projetos/wifi/.env` (adicionada em 2026-07-21) — worker 3 desbloqueado.
 
 ## 2. Os 3 workflows (workers)
 
@@ -68,8 +67,7 @@ Padrão de nomes do projeto: arquivos-skill em kebab-case com frontmatter `name`
 - **Escopo:** o pipeline completo conforme `doc/CLAUDE.md` + `doc/ad-pipeline.md`:
   Fal.ai/**Seedance** para stills e image-to-video, **ElevenLabs** para voz,
   **HyperFrames** para a montagem da avenida automatizada, CapCut/Premiere na assistida.
-- Mecânica em `doc/fal-setup.md` (já presente). **Pendência:** obter `FAL_KEY`
-  (não existe nos .env conhecidos) antes de rodar a lane Seedance.
+- Mecânica em `doc/fal-setup.md` (já presente); `FAL_KEY` em `~/projetos/wifi/.env`.
 
 ## 3. Tarefas de implementação (ordem de execução)
 
