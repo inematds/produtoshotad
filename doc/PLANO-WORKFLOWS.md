@@ -117,6 +117,30 @@ real — cachorro nadando no mar, gerado via Agnes como substituto de foto de pr
 - Artefatos de teste ficaram em `output/` (gitignored) — não versionados. `products/dog-hero.png`
   ficou versionado como fixture de teste do pipeline (não é produto real, não usar em anúncio real).
 
+**Produção "top" de demonstração em 2026-07-21** — mesmo teste, elevado a produto fictício com
+identidade visual forte (caixa de som preta fosca com anel de cobre — não é produto real, gerada
+via Agnes só para demonstrar a capacidade do pipeline):
+- `products/speaker-hero.png` + `products/speaker-closeup.png` — par de referência completo
+  (hero + close-up de detalhe), como o `product-consistency.md` pede.
+- Worker 1: 5 stills em 9:16 (vertical, formato de anúncio real) via `agnes_stills.py` com as
+  2 referências — produto manteve forma/proporção/cor idênticas nas 5 variações.
+- Worker 2: anúncio completo de 19s (não só 1 cena de teste) — 6 cenas: 3 stills plain com
+  Ken Burns variando direção, 1 typewriter caption sobre still overlay, 1 glass card de
+  feature callout, 1 CTA final com blur de fundo + badge. Voz gerada via Kokoro (roteiro de
+  ~30 palavras, 17.6s) sincronizada às cenas.
+- **2 bugs reais encontrados e corrigidos pelo `npm run check` do HyperFrames** (documentados
+  em `doc/ad-pipeline-hyperframes.md` e já embutidos em `scripts/hyperframes-still-scene.template.html`):
+  1. Tweens de saída manuais (`opacity:0`) em elementos `.clip` conflitam com o corte automático
+     do framework no limite `data-start`+`data-duration` — o linter rejeita
+     (`gsap_exit_missing_hard_kill`/`scene_layer_missing_visibility_kill`). Correção: só tweens
+     de entrada; o corte no limite do clip já é automático.
+  2. Legenda branca sobre still de fundo claro (estúdio branco, mesa de madeira) reprovou o
+     gate de contraste WCAG AA (`npm run check`, precisa 3:1). Correção: gradiente escuro
+     (`.scrim`) numa track própria entre a still e a legenda.
+- `npm run check` final: 0 erros, 5/5 contraste WCAG AA. `npm run render` produziu MP4 válido
+  (19.0s, 6.7MB, com áudio). Snapshots (`hyperframes snapshot --at ...`) confirmaram
+  visualmente: produto consistente nas 6 cenas, texto legível em todos os fundos, CTA final limpo.
+
 ## 4. Regras transversais (valem para os 3)
 
 - Referência travada re-anexada em toda geração (adaptada a 2 refs no Agnes).

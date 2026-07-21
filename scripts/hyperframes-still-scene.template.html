@@ -1,9 +1,10 @@
 <!doctype html>
 <!--
   Template: 1 scene = 1 still, Ken Burns pan/zoom + fade-in caption.
-  9:16 (1080x1920), ~5.5s per scene. Verified against a real `hyperframes init` project
-  (v0.7.66): `npm run check` passes lint/runtime/layout/motion/contrast, `npm run render`
-  produces a valid MP4 with this exact structure.
+  9:16 (1080x1920), ~5.5s per scene. Verified twice against real `hyperframes init`
+  projects (v0.7.66): a single-scene smoke test, then a full 6-scene/19s ad with
+  voiceover, typewriter caption, and a glass-card CTA — `npm run check` passed
+  lint/runtime/layout/motion/contrast and `npm run render` produced a valid MP4 both times.
 
   How to use:
   1. `npx hyperframes init <name> -e blank --resolution portrait --non-interactive`
@@ -15,9 +16,24 @@
      for a multi-scene ad (5-6 scenes / 30s total per ad-pipeline.md Stage B).
   5. `npm run check` then `npm run render`.
 
+  Two hard-won lessons from the full-ad test (not obvious from generic HyperFrames docs):
+
+  - **No manual exit-opacity tween on a `.clip` element.** The framework already shows/hides
+    `.clip` elements at their own data-start/data-duration boundary. Adding your own
+    `tl.to('#scene', {opacity:0}, <exit-time>)` trips `gsap_exit_missing_hard_kill` /
+    `scene_layer_missing_visibility_kill` in `npm run check` — non-linear seeking can land
+    after the fade and leave stale visibility state. Author ENTRANCE tweens only
+    (`tl.from(...)` / `tl.fromTo(...)` at data-start); let the clip boundary itself do the cut.
+  - **Add a scrim behind captions whenever the still's background can be light** (studio
+    white, wood tabletop, daylight). White caption text with only a text-shadow fails the
+    `npm run check` contrast gate (WCAG AA, needs 3:1) against light backgrounds — a
+    `.scrim` gradient div (see below) on its own track between the still and the caption
+    fixes it reliably across scenes without hand-tuning per-still.
+
   Load the `hyperframes` skill and `HyperFrames Production SKILL.md` (this repo's doc/)
-  before authoring beyond this skeleton — this covers only the base Ken Burns + caption
-  pattern, not glassmorphism/transitions/shaders from the full technique catalog.
+  before authoring beyond this skeleton — this covers only the base Ken Burns + caption +
+  contrast-scrim pattern, not glassmorphism/transitions/shaders from the full technique
+  catalog (see a worked example of those in a full ad in the worker 2 skill doc).
 -->
 <html lang="en" data-resolution="portrait">
   <head>
@@ -34,10 +50,15 @@
         background-size: cover; background-position: center;
         transform-origin: center center;
       }
+      /* Guarantees WCAG AA contrast for the caption regardless of still brightness. */
+      .scrim {
+        position: absolute; left: 0; right: 0; bottom: 0; height: 620px;
+        background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 55%, rgba(0,0,0,0) 100%);
+      }
       .caption {
         position: absolute; left: 60px; right: 60px; bottom: 220px;
         font-weight: 700; font-size: 56px; color: #fff;
-        text-shadow: 0 2px 24px rgba(0,0,0,.6);
+        text-shadow: 0 2px 24px rgba(0,0,0,.8);
       }
     </style>
   </head>
@@ -51,7 +72,8 @@
       data-height="1920"
     >
       <div id="still" class="still clip" data-start="0" data-duration="5.5" data-track-index="0"></div>
-      <div id="caption" class="caption clip" data-start="0" data-duration="5.5" data-track-index="1">
+      <div id="scrim" class="scrim clip" data-start="0" data-duration="5.5" data-track-index="1"></div>
+      <div id="caption" class="caption clip" data-start="0" data-duration="5.5" data-track-index="2">
         CAPTION_TEXT
       </div>
     </div>
@@ -60,6 +82,7 @@
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
       // Ken Burns: slow zoom + slight pan, no rotation (keeps product proportions legible).
+      // Entrance only — no exit tween; the .clip boundary handles hiding it (see notes above).
       tl.fromTo('#still',
         { scale: 1.0, x: 0, y: 0 },
         { scale: 1.08, x: -20, y: -10, duration: 5.5, ease: 'none' },

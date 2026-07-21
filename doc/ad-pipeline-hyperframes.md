@@ -36,6 +36,21 @@ authoring any composition:
 
 Do not hand-roll assembly logic or substitute a generic video-editing approach.
 
+## Two hard-won rules (from a real 6-scene/19s test run)
+
+- **Never add a manual exit-opacity tween on a `.clip` element.** The framework already
+  shows/hides `.clip` elements at their own `data-start`/`data-duration` boundary. A
+  hand-authored `tl.to('#scene', {opacity:0}, <exit-time>)` trips `npm run check`'s
+  `gsap_exit_missing_hard_kill` and `scene_layer_missing_visibility_kill` lint errors —
+  non-linear seeking can land after the fade and leave stale visibility state. Author
+  entrance tweens only; let the clip boundary itself perform the cut between scenes.
+- **Add a scrim behind every caption when the still's background can be light** (studio
+  white, wood tabletop, daylight scenes). White caption text with only a text-shadow fails
+  the WCAG AA contrast gate (needs 3:1) in `npm run check` against light backgrounds. Put a
+  `linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.38) 55%, transparent 100%)` div
+  on its own track between the still and the caption — see
+  `scripts/hyperframes-still-scene.template.html`, which has this baked in.
+
 ## Technique catalog (from HyperFrames Production SKILL.md)
 
 Pick per still, one primary technique per scene — do not stack:
