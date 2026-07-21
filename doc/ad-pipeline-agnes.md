@@ -34,6 +34,16 @@ If the user asks for video inside this worker, hand off to `ad-pipeline-hyperfra
 5. **1K resolution for volume runs.** 4K is slow, fails more, and produces files too large
    to reuse as a reference (>10MB input cap).
 6. **Download the PNG immediately** — the returned URL is temporary.
+7. **Avoid abstract marketing nouns in the description ("wellness", "care", "premium") when
+   the subject itself isn't a packaged product.** Measured failure: a description built
+   around "a happy healthy dog... symbol of pet wellness" caused Agnes to hallucinate
+   fictional product packaging (bottles/pouches with garbled, illegible text) into the
+   scene, unprompted — a real product-consistency violation the human QA gate must catch.
+   Rewriting the description to name only the concrete subject and explicitly stating
+   "no product packaging, no text, no labels, no bottles" removed the hallucination while
+   keeping the same reference-locked subject. Run this check every time the subject is not
+   itself a boxed/labeled product: does the description contain a word that reads as a
+   product category on its own? If so, add an explicit negative clause.
 
 ## Mechanics (auth, client)
 
