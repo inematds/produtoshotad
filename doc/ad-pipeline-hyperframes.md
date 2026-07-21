@@ -47,7 +47,9 @@ Pick per still, one primary technique per scene — do not stack:
 
 A starting composition skeleton for one still-to-scene unit is in
 `scripts/hyperframes-still-scene.template.html` (5–6s per scene, GSAP-driven Ken Burns +
-optional typewriter caption). Compose 5–6 of these per ad per `ad-pipeline.md` Stage B.
+fade-in caption) — verified end-to-end against a real `hyperframes init` scaffold
+(v0.7.66): `npm run check` and `npm run render` both pass with this exact structure.
+Compose 5–6 of these per ad per `ad-pipeline.md` Stage B, staggering `data-start` per scene.
 
 ## Sequence
 
@@ -57,8 +59,10 @@ optional typewriter caption). Compose 5–6 of these per ad per `ad-pipeline.md`
 3. Script and voiceover only after the scene cut is locked (per `ad-pipeline.md` step 4).
    Use `scripts/kokoro_tts.py` for a US$0 local voiceover, or ElevenLabs
    (`elevenlabs-setup.md`) if the user requests it.
-4. Render via the `hyperframes` skill's CLI workflow (`npx hyperframes render` /
-   `preview` per that skill — do not reimplement rendering here).
+4. Render via the `hyperframes` skill's CLI workflow: `npx hyperframes init <ad-name>
+   -e blank --resolution portrait --non-interactive`, drop the composition + still assets
+   in, then `npm run check` (must pass before rendering) and `npm run render`. Do not
+   reimplement rendering here.
 5. QA checkpoint on the rendered video: product not distorted by zoom/crop/pan, overlay
    copy legible, no motion artifact implying a product feature that doesn't exist.
 6. Same 3-automated / 2-manual split logic as the original pipeline — decide after

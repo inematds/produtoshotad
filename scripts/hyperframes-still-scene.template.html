@@ -1,59 +1,73 @@
 <!doctype html>
 <!--
-  Template: 1 scene = 1 still, Ken Burns pan/zoom + optional typewriter caption.
-  9:16, ~5-6s per scene. Duplicate this <section> per still and adjust data-start
-  per HyperFrames timing conventions (see the `hyperframes` skill and
-  `HyperFrames Production SKILL.md` in this repo's doc/ for full authoring rules).
-  Replace STILL_SRC and CAPTION_TEXT per scene before rendering.
+  Template: 1 scene = 1 still, Ken Burns pan/zoom + fade-in caption.
+  9:16 (1080x1920), ~5.5s per scene. Verified against a real `hyperframes init` project
+  (v0.7.66): `npm run check` passes lint/runtime/layout/motion/contrast, `npm run render`
+  produces a valid MP4 with this exact structure.
+
+  How to use:
+  1. `npx hyperframes init <name> -e blank --resolution portrait --non-interactive`
+  2. Copy this file's <style>/<body>/<script> content into the scaffolded index.html,
+     replacing its `#root` contents — keep the scaffold's own <head> boilerplate
+     (font loading, data-resolution attr, etc).
+  3. Put the still into the project's assets/ dir and point background-image at it.
+  4. Replace CAPTION_TEXT. Duplicate the .clip block per scene, staggering data-start,
+     for a multi-scene ad (5-6 scenes / 30s total per ad-pipeline.md Stage B).
+  5. `npm run check` then `npm run render`.
+
+  Load the `hyperframes` skill and `HyperFrames Production SKILL.md` (this repo's doc/)
+  before authoring beyond this skeleton — this covers only the base Ken Burns + caption
+  pattern, not glassmorphism/transitions/shaders from the full technique catalog.
 -->
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=1080, height=1920" />
-  <title>ad-scene</title>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: #050508; }
-    .scene { position: relative; width: 100%; height: 100%; overflow: hidden; }
-    .still {
-      position: absolute; inset: 0; width: 100%; height: 100%;
-      background-image: url('STILL_SRC');
-      background-size: cover; background-position: center;
-      transform-origin: center center;
-    }
-    .caption {
-      position: absolute; left: 60px; right: 60px; bottom: 220px;
-      font-family: -apple-system, sans-serif; font-weight: 700; font-size: 56px;
-      color: #fff; text-shadow: 0 2px 24px rgba(0,0,0,.6);
-      white-space: nowrap; overflow: hidden;
-    }
-  </style>
-</head>
-<body>
-  <section class="scene" data-start="0" data-duration="5.5">
-    <div class="still" id="still"></div>
-    <div class="caption" id="caption">CAPTION_TEXT</div>
-  </section>
-  <script>
-    // Ken Burns: slow zoom + slight pan, no rotation (keeps product proportions legible).
-    gsap.fromTo('#still',
-      { scale: 1.0, x: 0, y: 0 },
-      { scale: 1.08, x: -20, y: -10, duration: 5.5, ease: 'none' }
-    );
-    // Typewriter caption — only for copy-overlay scenes; remove this block for plain scenes.
-    const el = document.getElementById('caption');
-    const full = el.textContent;
-    el.textContent = '';
-    let i = 0;
-    gsap.to({}, {
-      duration: 1.2, ease: 'none',
-      onUpdate: function () {
-        const n = Math.floor(this.progress() * full.length);
-        if (n !== i) { i = n; el.textContent = full.slice(0, i); }
-      },
-      delay: 0.6,
-    });
-  </script>
-</body>
+<html lang="en" data-resolution="portrait">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1080px; height: 1920px; overflow: hidden; background: #050508; }
+      body { font-family: -apple-system, sans-serif; }
+      .still {
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        background-image: url('assets/STILL_SRC');
+        background-size: cover; background-position: center;
+        transform-origin: center center;
+      }
+      .caption {
+        position: absolute; left: 60px; right: 60px; bottom: 220px;
+        font-weight: 700; font-size: 56px; color: #fff;
+        text-shadow: 0 2px 24px rgba(0,0,0,.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="5.5"
+      data-width="1080"
+      data-height="1920"
+    >
+      <div id="still" class="still clip" data-start="0" data-duration="5.5" data-track-index="0"></div>
+      <div id="caption" class="caption clip" data-start="0" data-duration="5.5" data-track-index="1">
+        CAPTION_TEXT
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+      // Ken Burns: slow zoom + slight pan, no rotation (keeps product proportions legible).
+      tl.fromTo('#still',
+        { scale: 1.0, x: 0, y: 0 },
+        { scale: 1.08, x: -20, y: -10, duration: 5.5, ease: 'none' },
+        0
+      );
+      // Fade-in caption — remove this block for plain (no-copy) scenes.
+      tl.from('#caption', { opacity: 0, y: 20, duration: 0.8, ease: 'power2.out' }, 0.6);
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
 </html>

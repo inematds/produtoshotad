@@ -98,11 +98,24 @@ Tarefas 1–5 concluídas: estrutura de pastas, `.env.example`, `scripts/agnes_s
 `doc/ad-pipeline-hyperframes.md`, `ad-pipeline.md` e `CLAUDE.md` atualizados com o roteamento
 de worker.
 
-**Teste de fumaça (tarefa 6):** `AGNES_API_KEY`, `FAL_KEY` e `ELEVENLABS_API_KEY` carregam
-corretamente dos `.env` (sem imprimir valores). Kokoro TTS gerou áudio local com sucesso
-(`output/voz/smoke-test.wav`). **Não executado** por falta de insumo real: geração de still
-via Agnes (precisa de uma foto real de produto em `products/`) e chamada Seedance (custo real,
-requer pedido explícito e produto real). Rodar esses dois quando houver uma foto de produto.
+**Teste de fumaça (tarefa 6) — atualizado:** `AGNES_API_KEY`, `FAL_KEY` e `ELEVENLABS_API_KEY`
+carregam corretamente dos `.env` (sem imprimir valores). Kokoro TTS gerou áudio local com
+sucesso. Worker 3 (Seedance) segue **não testado** por decisão do usuário (custo real, sem
+necessidade de validar agora).
+
+**Worker 1 e 2 testados de ponta a ponta em 2026-07-21** com imagem de teste (não é produto
+real — cachorro nadando no mar, gerado via Agnes como substituto de foto de produto):
+- `products/dog-hero.png` — referência gerada via Agnes (`gerar.py`), usada como "hero" de teste.
+- Worker 1: `scripts/agnes_stills.py products/dog-hero.png --desc "..."` gerou as 5 stills
+  em `output/stills/` com sucesso (i2i, 1 ref, ~30-40s cada).
+- Worker 2: montagem de 1 cena a partir de `still-1-plain.png` num projeto `hyperframes init`
+  real (v0.7.66, template portrait). **Achado corrigido no template:** a estrutura original de
+  `scripts/hyperframes-still-scene.template.html` (seção solta com `gsap.fromTo` direto) não
+  seguia o runtime real — faltava o wrapper `data-composition-id="main"`, `class="clip"` nos
+  elementos com timing, e o registro em `window.__timelines`. Corrigido; `npm run check` passa
+  (lint/runtime/layout/motion/contrast) e `npm run render` produziu um MP4 válido (5.5s, 2.5MB).
+- Artefatos de teste ficaram em `output/` (gitignored) — não versionados. `products/dog-hero.png`
+  ficou versionado como fixture de teste do pipeline (não é produto real, não usar em anúncio real).
 
 ## 4. Regras transversais (valem para os 3)
 
