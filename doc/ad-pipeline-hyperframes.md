@@ -50,6 +50,35 @@ Do not hand-roll assembly logic or substitute a generic video-editing approach.
   `linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.38) 55%, transparent 100%)` div
   on its own track between the still and the caption — see
   `scripts/hyperframes-still-scene.template.html`, which has this baked in.
+- **A keyword-highlight accent color that looks fine by eye can still fail WCAG.** `#f5a623`
+  measured 2.77-2.85:1 (need 3:1) on a scrim'd scene in testing; the brighter `#f7b942` (the
+  value `npm run check` itself suggested) passed 19/19. Always re-run `npm run check` after
+  picking an accent color instead of eyeballing it.
+
+## Caption and transition upgrade (adapted from `reel-edita-inematds`)
+
+The base template also carries three techniques borrowed from the `reel-edita-inematds`
+skill's motion-graphics reference (`references/02-motion-graphics.md`) — proven there for
+talking-head reels, verified here on a real 6-scene product ad:
+
+- **Word-chip caption reveal** — the caption line pops up as a unit, then each word
+  fades in with a short stagger (`captionPop()` in the template), instead of a flat fade.
+  Reads as more "produced" and gives the caption entrance its own beat.
+- **Keyword highlight** — wrap the 1-2 words that carry the claim (`love`, `care`,
+  `balanced diet`, a number, a feature name) in `<span class="kw">` at the accent color.
+  Never highlight every word — 1-2 per line, matching the reel skill's captioning rule
+  ("destaque cobre tudo que for forte" but applied sparingly per line, not indiscriminately).
+- **Flash-cut scene transition** — a white `.flash` div, its own `.clip` element spanning
+  ~0.18s right at the scene boundary, entrance-only fade from opacity 0.9 to 0. Masks the
+  hard cut between outgoing/incoming `.clip` scenes with a quick flash instead of a bare cut.
+  One flash element per boundary (5-6 scenes → 4-5 flashes), not one per scene.
+- Also carried over: caption anchored at **chest height** (`bottom:300px`), never glued to
+  the bottom edge — the reel skill's rule that the bottom third gets covered by platform UI
+  applies just as much to a static product ad as to a talking-head reel.
+
+Still explicitly NOT carried over from that skill (belongs to a different domain — talking-
+head footage, not product stills): PiP camera layout, B-roll layering, silencedetect-based
+cutting, SFX mixing. Those assume a raw video source this worker doesn't have.
 
 ## Technique catalog (from HyperFrames Production SKILL.md)
 

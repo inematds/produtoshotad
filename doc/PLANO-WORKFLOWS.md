@@ -141,6 +141,26 @@ via Agnes só para demonstrar a capacidade do pipeline):
   (19.0s, 6.7MB, com áudio). Snapshots (`hyperframes snapshot --at ...`) confirmaram
   visualmente: produto consistente nas 6 cenas, texto legível em todos os fundos, CTA final limpo.
 
+**Repetição com o cachorro (tema cuidado com o pet) em 2026-07-21** — mesmo par worker 1+2,
+prompt "...symbol of pet wellness" fez a Agnes alucinar embalagens fictícias de produto com
+texto ilegível (achado documentado em `doc/ad-pipeline-agnes.md`). Corrigido removendo o
+substantivo abstrato de marketing e adicionando cláusula negativa explícita; QA humano (Read
+de cada still) confirmado limpo antes de seguir. Anúncio de 19s remontado e renderizado com
+sucesso (9.1MB, 0 erros, 5/5 contraste).
+
+**Upgrade de legenda/transição em 2026-07-21** — a pedido do usuário, aplicadas 3 técnicas da
+skill `reel-edita-inematds` (`references/02-motion-graphics.md`), adaptadas de reels
+talking-head pra anúncio de produto (documentado em `doc/ad-pipeline-hyperframes.md` e
+embutido em `scripts/hyperframes-still-scene.template.html`):
+1. Legenda com palavra-chave destacada em cor de acento (`.kw`), 1-2 palavras por linha.
+2. Entrada da legenda em "chip" com stagger palavra-a-palavra (`captionPop()`), não fade plano.
+3. Transição flash-cut entre cenas (`.flash`, clip de ~0.18s no limite de cada cena).
+- **3º achado real:** a cor âmbar `#f5a623` que "parecia boa" reprovou contraste (2.77-2.85:1,
+  precisa 3:1) numa das cenas com scrim. `npm run check` sugeriu `#f7b942`, que passou 19/19 —
+  lição: sempre rodar o check depois de escolher uma cor de acento, não confiar no olho.
+- Render final: 19s, 9.4MB, `npm run check` 0 erros/19-19 contraste. Confirmado visualmente
+  via snapshot no instante exato do flash-cut (t=3.38s) que o efeito aparece corretamente.
+
 ## 4. Regras transversais (valem para os 3)
 
 - Referência travada re-anexada em toda geração (adaptada a 2 refs no Agnes).

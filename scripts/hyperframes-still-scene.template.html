@@ -1,10 +1,11 @@
 <!doctype html>
 <!--
-  Template: 1 scene = 1 still, Ken Burns pan/zoom + fade-in caption.
-  9:16 (1080x1920), ~5.5s per scene. Verified twice against real `hyperframes init`
-  projects (v0.7.66): a single-scene smoke test, then a full 6-scene/19s ad with
-  voiceover, typewriter caption, and a glass-card CTA — `npm run check` passed
-  lint/runtime/layout/motion/contrast and `npm run render` produced a valid MP4 both times.
+  Template: 1 scene = 1 still, Ken Burns pan/zoom + word-stagger caption with a highlighted
+  keyword + flash-cut boundary mask. 9:16 (1080x1920), ~5.5s per scene. Verified three times
+  against real `hyperframes init` projects (v0.7.66): a single-scene smoke test, a full
+  6-scene/19s ad with voiceover + typewriter + glass-card CTA, then this upgraded caption/
+  transition pass — `npm run check` passed lint/runtime/layout/motion/contrast and
+  `npm run render` produced a valid MP4 every time.
 
   How to use:
   1. `npx hyperframes init <name> -e blank --resolution portrait --non-interactive`
@@ -12,11 +13,13 @@
      replacing its `#root` contents — keep the scaffold's own <head> boilerplate
      (font loading, data-resolution attr, etc).
   3. Put the still into the project's assets/ dir and point background-image at it.
-  4. Replace CAPTION_TEXT. Duplicate the .clip block per scene, staggering data-start,
-     for a multi-scene ad (5-6 scenes / 30s total per ad-pipeline.md Stage B).
+  4. Replace CAPTION_TEXT — wrap each word in `<span class="w">`, and the 1-2 words you
+     want to pop in accent color in `<span class="w kw">`. Duplicate the .clip block per
+     scene, staggering data-start, for a multi-scene ad (5-6 scenes / 30s total per
+     ad-pipeline.md Stage B). Add a `.flash` clip at each scene boundary (see below).
   5. `npm run check` then `npm run render`.
 
-  Two hard-won lessons from the full-ad test (not obvious from generic HyperFrames docs):
+  Three hard-won lessons from full-ad tests (not obvious from generic HyperFrames docs):
 
   - **No manual exit-opacity tween on a `.clip` element.** The framework already shows/hides
     `.clip` elements at their own data-start/data-duration boundary. Adding your own
@@ -29,11 +32,20 @@
     `npm run check` contrast gate (WCAG AA, needs 3:1) against light backgrounds — a
     `.scrim` gradient div (see below) on its own track between the still and the caption
     fixes it reliably across scenes without hand-tuning per-still.
+  - **A highlighted-keyword accent color that looks fine by eye can still fail the WCAG
+    check.** `#f5a623` measured 2.77-2.85:1 (need 3:1) against one scrim'd scene; the
+    brighter `#f7b942` the linter itself suggested passed 19/19. Always re-run `npm run
+    check` after picking an accent color — don't eyeball it.
+
+  Caption/transition techniques below are adapted from the `reel-edita-inematds` skill's
+  motion-graphics reference (word-chip reveal, flash-cut) — reused here because they read as
+  more "produced" than a flat crossfade and the keyword-highlight pattern doubles as the
+  copy-overlay treatment product-consistency.md calls for.
 
   Load the `hyperframes` skill and `HyperFrames Production SKILL.md` (this repo's doc/)
-  before authoring beyond this skeleton — this covers only the base Ken Burns + caption +
-  contrast-scrim pattern, not glassmorphism/transitions/shaders from the full technique
-  catalog (see a worked example of those in a full ad in the worker 2 skill doc).
+  before authoring beyond this skeleton — this covers Ken Burns, contrast-scrim, word-chip
+  caption, and flash-cut only, not glassmorphism/shaders from the full technique catalog
+  (see a worked example of those in a full ad in the worker 2 skill doc).
 -->
 <html lang="en" data-resolution="portrait">
   <head>
@@ -55,11 +67,16 @@
         position: absolute; left: 0; right: 0; bottom: 0; height: 620px;
         background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.38) 55%, rgba(0,0,0,0) 100%);
       }
+      /* Chest-height caption, never glued to the bottom edge (social-app UI safe zone). */
       .caption {
-        position: absolute; left: 60px; right: 60px; bottom: 220px;
-        font-weight: 700; font-size: 56px; color: #fff;
-        text-shadow: 0 2px 24px rgba(0,0,0,.8);
+        position: absolute; left: 60px; right: 60px; bottom: 300px;
+        font-weight: 700; font-size: 52px; color: #f7f7f2; line-height: 1.2;
+        text-shadow: 0 2px 20px rgba(0,0,0,.8);
       }
+      .caption .w { display: inline-block; }
+      .caption .kw { color: #f7b942; } /* re-verify with `npm run check` if you change this */
+      /* Flash-cut mask between scenes: its own short-lived .clip, entrance-only fade. */
+      .flash { position: absolute; inset: 0; background: #fff; }
     </style>
   </head>
   <body>
@@ -74,13 +91,17 @@
       <div id="still" class="still clip" data-start="0" data-duration="5.5" data-track-index="0"></div>
       <div id="scrim" class="scrim clip" data-start="0" data-duration="5.5" data-track-index="1"></div>
       <div id="caption" class="caption clip" data-start="0" data-duration="5.5" data-track-index="2">
-        CAPTION_TEXT
+        <span class="w">CAPTION_TEXT</span> <span class="w kw">KEYWORD</span>
       </div>
+      <!-- One flash per scene BOUNDARY (not per scene) — put this at the END of a scene's
+           duration, right where the next scene's data-start begins. Omit for the first scene. -->
+      <div id="flash" class="flash clip" data-start="5.44" data-duration="0.18" data-track-index="3"></div>
     </div>
 
     <script>
       window.__timelines = window.__timelines || {};
       const tl = gsap.timeline({ paused: true });
+
       // Ken Burns: slow zoom + slight pan, no rotation (keeps product proportions legible).
       // Entrance only — no exit tween; the .clip boundary handles hiding it (see notes above).
       tl.fromTo('#still',
@@ -88,8 +109,23 @@
         { scale: 1.08, x: -20, y: -10, duration: 5.5, ease: 'none' },
         0
       );
-      // Fade-in caption — remove this block for plain (no-copy) scenes.
-      tl.from('#caption', { opacity: 0, y: 20, duration: 0.8, ease: 'power2.out' }, 0.6);
+
+      // Word-chip caption reveal (adapted from reel-edita-inematds kpop()): the whole line
+      // pops up, then each word fades in with a stagger. Remove for plain (no-copy) scenes.
+      function captionPop(sel, tin) {
+        tl.fromTo(sel, { opacity: 0, y: 30, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.6)' }, tin);
+        tl.fromTo(sel + ' .w', { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.22, stagger: 0.05, ease: 'power2.out' }, tin + 0.08);
+      }
+      captionPop('#caption', 0.6);
+
+      // Flash-cut mask: white flash fading out fast right at the scene boundary, masking the
+      // hard cut between the outgoing and incoming clip elements. Call once per boundary,
+      // at that boundary's timestamp (= this scene's data-start + data-duration).
+      function flashCut(sel, t) {
+        tl.fromTo(sel, { opacity: 0.9 }, { opacity: 0, duration: 0.16, ease: 'power2.out' }, t);
+      }
+      flashCut('#flash', 5.44);
+
       window.__timelines['main'] = tl;
     </script>
   </body>
