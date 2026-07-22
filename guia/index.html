@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>produtoshotad — foto de produto → 5 anúncios + 5 vídeos, com IA</title>
+<meta name="description" content="Pipeline que transforma 1 foto de produto em 5 imagens de anúncio e 5 vídeos curtos (9:16), em 3 workers: Agnes (US$0, só imagens), HyperFrames (vídeo sem IA de vídeo) e Fal/Seedance (pipeline original completo).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0c0c10; --bg2:#14141b; --card:#16161e; --line:#272730;
+    --txt:#e9e9ee; --mut:#9a9aa6; --amb:#E2A23B; --amb2:#f0c070; --sky:#38bdf8; --pro:#cbd5e1;
+    color-scheme:dark;
+  }
+  body.light{
+    --bg:#f6f7f9; --bg2:#eceef2; --card:#ffffff; --line:#e1e3ea;
+    --txt:#1a1a22; --mut:#5b5b68; --amb:#b9791d; --amb2:#a16207; --sky:#0369a1; --pro:#b45309;
+    color-scheme:light;
+  }
+  body.light .hero .glow{opacity:.5}
+  body.light pre{background:#0e0e14;color:#d6d6e0}
+  body.light pre .c{color:#8a8a98}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.65 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:Sora,sans-serif;line-height:1.15;margin:0}
+  a{color:var(--amb);text-decoration:none}
+  code,pre{font-family:"JetBrains Mono",monospace}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+  .mut{color:var(--mut)} .amb{color:var(--amb)}
+  .chip{display:inline-block;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amb);font-weight:600;font-family:Sora}
+  nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(12px);background:rgba(12,12,16,.78);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;align-items:center;gap:22px;height:60px}
+  nav .brand{display:flex;align-items:center;gap:8px;font-family:Sora;font-weight:800;letter-spacing:-.02em;color:var(--amb)}
+  nav .brand .emoji{font-size:1.25rem}
+  nav .sep{color:var(--mut);opacity:.45}
+  nav .inema{color:var(--sky);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .inema:hover{filter:brightness(1.15)}
+  nav .pro{color:var(--pro);font-weight:600;font-size:.88rem;font-family:Sora}
+  nav .pro:hover{filter:brightness(1.15)}
+  nav .clubpro{display:inline-flex;align-items:center;gap:6px}
+  nav .links{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:.92rem}
+  nav .links a.sec{color:var(--mut)} nav .links a.sec:hover{color:var(--txt)}
+  .tgl{background:var(--bg2);border:1px solid var(--line);color:var(--txt);width:38px;height:38px;border-radius:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:1.05rem}
+  .tgl:hover{border-color:var(--amb)}
+  .btn{display:inline-block;background:var(--amb);color:#1a1206;font-weight:600;padding:.6em 1.05em;border-radius:10px;font-family:Sora}
+  .btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  @media(max-width:760px){nav .links a.sec{display:none}}
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--line)}
+  .hero .glow{position:absolute;inset:-40% -20% auto auto;width:70%;height:600px;background:radial-gradient(closest-side,rgba(226,162,59,.22),transparent 70%);pointer-events:none}
+  .hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:74px 22px}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.025em}
+  .hero p.lead{font-size:1.18rem;color:var(--mut);margin:1.1em 0 1.6em;max-width:34ch}
+  .hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+  .hero figure{margin:0;border-radius:16px;overflow:hidden;border:1px solid var(--line);box-shadow:0 30px 80px -30px #000}
+  .hero figure img{width:100%;display:block}
+  @media(max-width:780px){.hero .wrap{grid-template-columns:1fr;padding:48px 22px}}
+  section{padding:62px 0;border-bottom:1px solid var(--line)}
+  section h2{font-size:clamp(1.5rem,3.4vw,2.1rem);font-weight:800;letter-spacing:-.02em}
+  section .sub{color:var(--mut);margin:.6em 0 2em;max-width:62ch}
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)} .g2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:820px){.g3,.g4{grid-template-columns:1fr 1fr}}
+  @media(max-width:540px){.g2,.g3,.g4{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card h3{font-size:1.05rem;margin-bottom:.4em}
+  .card p{color:var(--mut);font-size:.92rem;margin:0}
+  .num{display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:8px;background:rgba(226,162,59,.14);color:var(--amb);font-family:Sora;font-weight:800;font-size:.9rem;margin-bottom:.7em}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+  .flow span{background:var(--bg2);border:1px solid var(--line);border-radius:999px;padding:.45em .9em;font-size:.85rem;font-family:Sora;font-weight:600}
+  .flow .arr{color:var(--amb);border:none;background:none;padding:0 .1em}
+  pre{background:#0a0a0e;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow:auto;font-size:.86rem;line-height:1.6;color:#d6d6e0}
+  pre .c{color:#6f6f7c} pre .k{color:var(--amb2)} pre .s{color:#9ece6a}
+  .step{display:grid;grid-template-columns:46px 1fr;gap:16px;margin-bottom:26px}
+  .step .b{width:46px;height:46px;border-radius:12px;background:var(--amb);color:#1a1206;font-family:Sora;font-weight:800;font-size:1.25rem;display:flex;align-items:center;justify-content:center}
+  .step h3{font-size:1.12rem;margin-bottom:.3em}
+  .step p{color:var(--mut);margin:.2em 0 .7em}
+  .ex{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:680px){.ex{grid-template-columns:1fr}}
+  .ex figure{margin:0;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+  .ex figure img{width:100%;display:block}
+  .ex figcaption{padding:12px 14px;font-size:.88rem;color:var(--mut);background:var(--card)}
+  .phase{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--line)}
+  .phase:last-child{border:none}
+  .phase .tag{flex:0 0 92px;font-family:Sora;font-weight:800;color:var(--amb)}
+  .phase .d strong{display:block;margin-bottom:.2em}
+  .phase .d span{color:var(--mut);font-size:.92rem}
+  footer{padding:46px 0;text-align:center;color:var(--mut);font-size:.9rem}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.3em .8em;font-size:.78rem;color:var(--mut);margin:0 4px}
+</style>
+</head>
+<body>
+
+<nav><div class="wrap">
+  <a class="brand" href="#top"><span class="emoji">📸</span> produtoshotad</a>
+  <span class="sep">|</span>
+  <span class="clubpro">
+    <a class="inema" href="https://inema.club" target="_blank" rel="noopener">INEMA.CLUB</a>
+    <span class="sep">-</span>
+    <a class="pro" href="https://inema.pro" target="_blank" rel="noopener">PRO</a>
+  </span>
+  <div class="links">
+    <a class="sec" href="#oque">O que é</a>
+    <a class="sec" href="#fluxo">Como funciona</a>
+    <a class="sec" href="#guia">Guia de uso</a>
+    <a class="sec" href="#exemplos">Exemplos</a>
+    <a class="sec" href="#roadmap">Roadmap</a>
+    <button class="tgl" id="themeToggle" aria-label="Alternar tema" title="Alternar tema">🌙</button>
+    <a class="btn" href="https://github.com/inematds/produtoshotad" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</div></nav>
+
+<header class="hero" id="top">
+  <div class="glow"></div>
+  <div class="wrap">
+    <div>
+      <span class="chip">Foto de produto → campanha completa</span>
+      <h1>1 foto vira <span class="amb">5 anúncios</span> e 5 vídeos</h1>
+      <p class="lead">Pipeline de IA que transforma uma única foto de produto real em 5 imagens de anúncio e 5 vídeos curtos verticais (9:16, ~19-30s), com 3 workers diferentes conforme custo e ferramenta desejada.</p>
+      <div class="cta">
+        <a class="btn" href="#guia">Começar o guia</a>
+        <a class="btn ghost" href="https://github.com/inematds/produtoshotad" target="_blank" rel="noopener">Ver no GitHub</a>
+      </div>
+    </div>
+    <figure><img src="assets/hero.jpg" alt="Ilustração do pipeline produtoshotad"></figure>
+  </div>
+</header>
+
+<section id="oque"><div class="wrap">
+  <span class="chip">O que é</span>
+  <h2>Automação de creative de anúncio com IA</h2>
+  <p class="sub">Um agente Claude Code orquestra geração de imagem, animação de vídeo e voz — sem precisar de fotógrafo, editor de vídeo ou dublê de anúncio pago em cada teste.</p>
+  <div class="grid g3">
+    <div class="card"><h3>📸 Anti-drift</h3><p>Referência do produto (hero + close-up) travada e reanexada em toda geração — o produto não muda de forma/cor/proporção entre as 5 variações.</p></div>
+    <div class="card"><h3>🧩 3 workers</h3><p>Agnes (US$0, só imagens), HyperFrames (vídeo animando as stills, sem IA de vídeo) ou o pipeline original completo (Fal.ai/Seedance + ElevenLabs).</p></div>
+    <div class="card"><h3>✅ QA obrigatório</h3><p>Checkpoint humano antes de cada estágio avançar — gate que já pegou alucinações reais (embalagem fictícia, texto ilegível) durante o desenvolvimento.</p></div>
+  </div>
+</div></section>
+
+<section id="fluxo"><div class="wrap">
+  <span class="chip">Como funciona</span>
+  <h2>Do photo ao anúncio pronto</h2>
+  <p class="sub">Os 3 workers compartilham a mesma estrutura de entrega — 5 stills + 5 vídeos — e só divergem na ferramenta de geração.</p>
+  <div class="flow">
+    <span>1 foto de produto</span><span class="arr">→</span>
+    <span>hero + close-up travados</span><span class="arr">→</span>
+    <span>5 stills (3 plain + 2 overlay)</span><span class="arr">→</span>
+    <span>QA humano</span><span class="arr">→</span>
+    <span>animação HyperFrames <em>ou</em> i2v Seedance</span><span class="arr">→</span>
+    <span>voz (Kokoro/ElevenLabs)</span><span class="arr">→</span>
+    <span>5 vídeos 9:16</span>
+  </div>
+  <div class="grid g3" style="margin-top:24px">
+    <div class="card"><h3>1 · Agnes</h3><p>Só imagens, API Agnes AI, US$0 de custo de geração. Sem vídeo.</p></div>
+    <div class="card"><h3>2 · HyperFrames</h3><p>Anima as stills já aprovadas com GSAP (Ken Burns, typewriter, glass card, flash-cut) — nenhum modelo de vídeo por IA envolvido.</p></div>
+    <div class="card"><h3>3 · Original</h3><p>Pipeline completo com Fal.ai/Seedance para image-to-video e ElevenLabs para voz — qualidade máxima, custo pago.</p></div>
+  </div>
+</div></section>
+
+<section id="pre"><div class="wrap">
+  <span class="chip">Pré-requisitos</span>
+  <h2>O que precisa estar no ar</h2>
+  <p class="sub">Depende de qual worker você vai rodar — nenhum dos três exige todos os itens abaixo ao mesmo tempo.</p>
+  <div class="grid g3">
+    <div class="card"><h3>Worker 1 — Agnes</h3><p>Chave da API Agnes AI (US$0).</p><pre><span class="c"># .env</span>
+AGNES_API_KEY=...</pre></div>
+    <div class="card"><h3>Worker 2 — HyperFrames</h3><p>CLI HyperFrames (via npx) + Kokoro TTS local, opcional.</p><pre><span class="c"># roda direto</span>
+npx hyperframes init</pre></div>
+    <div class="card"><h3>Worker 3 — Original</h3><p>Chaves Fal.ai e ElevenLabs.</p><pre><span class="c"># .env</span>
+FAL_KEY=...
+ELEVENLABS_API_KEY=...</pre></div>
+  </div>
+</div></section>
+
+<section id="guia"><div class="wrap">
+  <span class="chip">Guia de uso · passo a passo</span>
+  <h2>Rodando o worker 1 + 2 (custo zero)</h2>
+  <p class="sub">O caminho mais barato: gerar as 5 stills com Agnes, depois animá-las com HyperFrames — sem nenhuma chamada de vídeo por IA.</p>
+
+  <div class="step"><div class="b">1</div><div>
+    <h3>Coloque a foto do produto</h3>
+    <p>Uma foto real, fundo neutro, em <code>products/</code>.</p>
+<pre><span class="k">cp minha-foto.png products/hero.png</span>  <span class="c"># referência travada</span></pre>
+  </div></div>
+
+  <div class="step"><div class="b">2</div><div>
+    <h3>Gere as 5 stills (worker 1, Agnes)</h3>
+    <p>3 plain (uso direto) + 2 overlay (base para copy). Retry automático em 503, US$0.</p>
+<pre><span class="k">python3 scripts/agnes_stills.py products/hero.png --desc "descrição em inglês" --ratio 9:16</span>  <span class="c"># output/stills/*.png</span></pre>
+  </div></div>
+
+  <div class="step"><div class="b">3</div><div>
+    <h3>QA checkpoint (obrigatório, não pule)</h3>
+    <p>Confira as 5 imagens contra a foto real antes de seguir — pega alucinação de embalagem/texto fictício antes de virar vídeo.</p>
+<pre><span class="c"># abra e confira cada still em output/stills/ antes do próximo passo</span></pre>
+  </div></div>
+
+  <div class="step"><div class="b">4</div><div>
+    <h3>Gere a narração (opcional, Kokoro local)</h3>
+    <p>TTS local, sem custo, reusa os pesos já baixados pelo HyperFrames.</p>
+<pre><span class="k">python3 scripts/kokoro_tts.py "seu roteiro aqui" -o output/voz/ad.wav</span>  <span class="c"># .wav local</span></pre>
+  </div></div>
+
+  <div class="step"><div class="b">5</div><div>
+    <h3>Monte e renderize o vídeo (worker 2, HyperFrames)</h3>
+    <p>Anima as stills com Ken Burns, legenda com palavra-chave destacada, flash-cut entre cenas e CTA final — sem gerar nenhum pixel novo por IA de vídeo.</p>
+<pre><span class="k">npx hyperframes init meu-anuncio -e blank --resolution portrait --non-interactive</span>  <span class="c"># scaffold</span>
+<span class="c"># copie scripts/hyperframes-still-scene.template.html pro index.html e ajuste</span>
+<span class="k">npm run check && npm run render</span>  <span class="c"># MP4 final em renders/</span></pre>
+  </div></div>
+</div></section>
+
+<section id="exemplos"><div class="wrap">
+  <span class="chip">Exemplos</span>
+  <h2>Produções de teste</h2>
+  <p class="sub">Contact sheets de dois anúncios de demonstração gerados de ponta a ponta pelo pipeline (produtos fictícios, usados só para validar a técnica).</p>
+  <div class="ex">
+    <figure><img src="assets/ex1.jpg" alt="Contact sheet do anúncio de caixa de som"><figcaption>Anúncio de 19s, 6 cenas — Ken Burns, typewriter, glass card e CTA final.</figcaption></figure>
+    <figure><img src="assets/ex2.jpg" alt="Contact sheet do anúncio de cuidado com pet"><figcaption>Segunda produção — legenda com palavra-chave destacada e transição flash-cut entre cenas.</figcaption></figure>
+  </div>
+</div></section>
+
+<section id="roadmap"><div class="wrap">
+  <span class="chip">Roadmap</span>
+  <h2>Onde o projeto está</h2>
+  <p class="sub">Os 3 workers estão implementados e os workers 1+2 foram testados de ponta a ponta (incluindo bugs reais encontrados e corrigidos no processo).</p>
+  <div class="phase"><div class="tag">Feito</div><div class="d"><strong>Workers 1 e 2 implementados e testados</strong><span>Stills via Agnes, vídeo via HyperFrames — testado com produção completa, 0 erros no lint, contraste WCAG AA.</span></div></div>
+  <div class="phase"><div class="tag">Feito</div><div class="d"><strong>Documentação de mecânica (fal-setup, elevenlabs-setup)</strong><span>Worker 3 documentado e pronto, aguardando teste real com produto de verdade.</span></div></div>
+  <div class="phase"><div class="tag">Próximo</div><div class="d"><strong>Teste do worker 3 com produto real</strong><span>Rodar o pipeline Fal.ai/Seedance com uma foto de produto real, não fictícia.</span></div></div>
+</div></section>
+
+<footer>
+  <div class="wrap">
+    <div class="pill">Agnes AI</div><div class="pill">HyperFrames</div><div class="pill">Fal.ai/Seedance</div><div class="pill">ElevenLabs</div><div class="pill">Kokoro</div>
+    <p style="margin-top:18px">produtoshotad · pipeline de anúncios com IA ·
+      <a href="https://github.com/inematds/produtoshotad">inematds/produtoshotad</a> ·
+      <a href="https://inema.club">INEMA.CLUB</a></p>
+  </div>
+</footer>
+
+<script>
+  (function(){
+    var KEY='produtoshotad-theme';
+    var b=document.body, t=document.getElementById('themeToggle');
+    if(localStorage.getItem(KEY)==='light'){ b.classList.add('light'); t.textContent='☀️'; }
+    t.addEventListener('click',function(){
+      var light=b.classList.toggle('light');
+      t.textContent=light?'☀️':'🌙';
+      localStorage.setItem(KEY, light?'light':'dark');
+    });
+  })();
+</script>
+</body>
+</html>
